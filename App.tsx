@@ -755,6 +755,42 @@ export default function App() {
 
            <main className={`flex-1 min-w-0 pt-6 transition-all duration-300 ${sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
                {view === 'debug' && <DebugSuite />}
+               {view === 'admin' && currentUser?.isAdmin && (
+                   <div className="space-y-4">
+                       <h2 className="text-2xl font-bold text-gray-800">Admin Panel</h2>
+                       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                           <table className="w-full text-sm text-left">
+                               <thead className="bg-gray-50 text-gray-600 font-bold">
+                                   <tr>
+                                       <th className="p-4">Nome</th>
+                                       <th className="p-4">Email</th>
+                                       <th className="p-4">Dias desde cadastro</th>
+                                       <th className="p-4">Plano</th>
+                                       <th className="p-4">Ações</th>
+                                   </tr>
+                               </thead>
+                               <tbody>
+                                   {allUsersAdmin.map(user => (
+                                       <tr key={user.id} className="border-t border-gray-100">
+                                           <td className="p-4">{user.name}</td>
+                                           <td className="p-4">{user.email}</td>
+                                           <td className="p-4">{user.createdAt ? Math.floor((new Date().getTime() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : '-'} dias</td>
+                                           <td className="p-4 capitalize">{user.plan}</td>
+                                           <td className="p-4">
+                                               <button 
+                                                   onClick={() => handleAdminApprove(user.id, !user.isApproved)}
+                                                   className={`px-3 py-1 rounded-lg font-bold text-xs ${user.isApproved ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}
+                                               >
+                                                   {user.isApproved ? 'Desabilitar' : 'Habilitar'}
+                                               </button>
+                                           </td>
+                                       </tr>
+                                   ))}
+                               </tbody>
+                           </table>
+                       </div>
+                   </div>
+               )}
                {view === 'feed' && <FamilyFeed />}
                {view === 'chat' && <ChatAssistant />}
                {view === 'visualizer' && <Visualizer />}
