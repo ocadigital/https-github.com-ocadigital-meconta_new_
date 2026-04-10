@@ -65,7 +65,6 @@ export interface Transaction {
   isImported?: boolean; // Identifies transactions imported via OFX/PDF
   frequencyMonths?: number[]; // 1-12 representing Jan-Dec
   receiptImage?: string; // Base64 or URL
-  notes?: string; // Optional observations
   
   // Installment Logic
   installmentNumber?: number; // 1

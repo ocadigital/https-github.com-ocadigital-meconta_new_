@@ -122,7 +122,6 @@ export default function App() {
   const [isPaid, setIsPaid] = useState(false); 
   const [isPrivate, setIsPrivate] = useState(false); 
   const [receiptImage, setReceiptImage] = useState<string | undefined>(undefined); 
-  const [notes, setNotes] = useState(''); 
   const [selectedMember, setSelectedMember] = useState<string>(''); 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('DEBIT');
   const [selectedAccount, setSelectedAccount] = useState<string>('');
@@ -398,7 +397,6 @@ export default function App() {
               installmentTotal: recurrenceMode === 'installment' ? installmentTotal : 1,
               frequencyMonths: recurrenceMode === 'fixed' ? frequencyMonths : undefined,
               receiptImage,
-              notes,
               isPrivate,
               parentTransactionId: editingTransactionId ? undefined : Date.now().toString() // Generate grouping ID for new
           };
@@ -465,6 +463,14 @@ export default function App() {
       };
       
       await storageService.updateTransaction(t);
+      try {
+          const currentUserId = localStorage.getItem('finance_current_user_id');
+          await fetch('/api/transactions?mode=feed', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUserId || '' },
+              body: JSON.stringify({ ...t, type: t.type, userName: currentUser?.name || 'Usuário', avatarColor: currentUser?.avatarColor || 'bg-gray-500', isPrivate: t.isPrivate })
+          });
+      } catch (e) { console.error("Failed to add to feed"); }
       await loadData();
       setPaymentModal({ isOpen: false, transaction: null });
       showToast("Baixa confirmada!");
@@ -537,7 +543,6 @@ export default function App() {
     setIsPrivate(false);
     setFrequencyMonths([new Date().getMonth() + 1]);
     setReceiptImage(undefined);
-    setNotes('');
     setInstallmentTotal(2);
     setSelectedMember(currentUser?.id || '');
     setPaymentMethod('DEBIT');
@@ -571,7 +576,6 @@ export default function App() {
       setInstallmentTotal(t.installmentTotal || 1);
       setIsPaid(t.isPaid);
       setIsPrivate(t.isPrivate || false);
-      setNotes(t.notes || '');
       setReceiptImage(undefined); 
       setSelectedMember(t.memberId || t.userId);
       setPaymentMethod(t.paymentMethod);
@@ -594,7 +598,6 @@ export default function App() {
       setInstallmentTotal(t.installmentTotal || 1);
       setIsPaid(t.isPaid);
       setIsPrivate(t.isPrivate || false);
-      setNotes(t.notes || '');
       setSelectedMember(t.memberId || t.userId);
       setPaymentMethod(t.paymentMethod);
       setSelectedAccount(t.accountId || '');
