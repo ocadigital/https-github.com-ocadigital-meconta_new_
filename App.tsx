@@ -1033,7 +1033,7 @@ export default function App() {
                                 <div><label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Estabelecimento</label><div className="relative"><Store className="absolute left-3 top-3 text-gray-400 w-4 h-4"/><input type="text" placeholder="Opcional" value={store} onChange={e => setStore(e.target.value)} className="w-full pl-9 p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm" /></div></div>
                                 <div><label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Categoria</label><div className="relative"><Tag className="absolute left-3 top-3 text-gray-400 w-4 h-4"/><select value={category} onChange={e => setCategory(e.target.value)} className="w-full pl-9 p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm appearance-none"><option value="">Selecionar...</option>{(type === TransactionType.INCOME ? incomeCategories : expenseCategories).map(c => <option key={c} value={c}>{c}</option>)}</select></div></div>
                            </div>
-                           <div><label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Observações</label><textarea placeholder="Detalhes opcionais..." value={notes} onChange={e => setNotes(e.target.value)} className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm h-20 resize-none" /></div>
+                           <div></div>
                            <div className="flex gap-4 pt-2">
                                <button type="button" onClick={() => setIsPaid(!isPaid)} className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all border ${isPaid ? 'bg-green-100 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
                                    {isPaid ? <CheckCircle className="w-5 h-5"/> : <div className="w-5 h-5 border-2 border-gray-400 rounded-full"></div>}
@@ -1106,7 +1106,17 @@ export default function App() {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center"><h3 className="text-2xl font-bold">Termos de Uso</h3><button onClick={() => setShowTerms(false)}><X className="w-6 h-6"/></button></div>
-                <div className="p-6 overflow-y-auto text-sm text-gray-600"><p>Termos de uso simplificados...</p></div>
+                <div className="p-6 overflow-y-auto text-gray-600 space-y-4 text-sm leading-relaxed">
+                        <p><strong>1. Aceitação:</strong> Ao utilizar o MeConta, você concorda com estes termos. O serviço é fornecido "como está".</p>
+                        <p><strong>2. Uso do Serviço:</strong> Você é responsável por manter sua senha segura. Não compartilhe sua conta com terceiros fora do seu núcleo familiar.</p>
+                        <p><strong>3. Pagamentos:</strong> O período de teste é de 7 dias. Após isso, a assinatura será cobrada conforme o plano escolhido. Cancelamentos devem ser feitos antes da renovação.</p>
+                        <p><strong>4. Propriedade Intelectual:</strong> Todo o design, código e conteúdo são propriedade exclusiva do MeConta.</p>
+                        <p><strong>5. Modificações:</strong> Podemos alterar estes termos a qualquer momento, notificando os usuários via email ou aviso no app.</p>
+                        <p>Este é um documento simplificado para fins de demonstração.</p>
+                    </div>
+                    <div className="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+                        <button onClick={() => setShowTerms(false)} className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold">Entendi</button>
+                    </div>
             </div>
         </div>
        )}
@@ -1114,7 +1124,17 @@ export default function App() {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center"><h3 className="text-2xl font-bold">Política de Privacidade</h3><button onClick={() => setShowPrivacy(false)}><X className="w-6 h-6"/></button></div>
-                <div className="p-6 overflow-y-auto text-sm text-gray-600"><p>Política de privacidade e LGPD...</p></div>
+                <div className="p-6 overflow-y-auto text-gray-600 space-y-4 text-sm leading-relaxed">
+                        <p><strong>1. Coleta de Dados:</strong> Coletamos apenas as informações necessárias para o funcionamento do MeConta, conforme a LGPD.</p>
+                        <p><strong>2. Uso dos Dados:</strong> Seus dados são usados exclusivamente para a gestão financeira da sua família.</p>
+                        <p><strong>3. Segurança:</strong> Utilizamos medidas de segurança padrão para proteger suas informações contra acesso não autorizado.</p>
+                        <p><strong>4. Compartilhamento:</strong> Não compartilhamos seus dados com terceiros para fins de marketing.</p>
+                        <p><strong>5. Seus Direitos:</strong> Você pode solicitar a exclusão de seus dados a qualquer momento através da opção "Excluir Minha Conta".</p>
+                        <p>Este é um documento simplificado para fins de demonstração.</p>
+                    </div>
+                    <div className="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+                        <button onClick={() => setShowPrivacy(false)} className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold">Entendi</button>
+                    </div>
             </div>
         </div>
        )}
