@@ -220,7 +220,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                                     </td>
                                     <td className="p-4">
                                         <span className={`text-xs px-2 py-1 rounded-full font-bold ${t.isPaid ? 'bg-red-100 text-red-700' : 'border border-gray-200 text-gray-500'}`}>
-                                            {t.isPaid ? 'Pago' : 'A Pagar'}
+                                            {t.isPaid ? 'Pago' : 'Pendente'}
                                         </span>
                                     </td>
                                     <td className="p-4 text-right">
