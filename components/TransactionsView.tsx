@@ -66,18 +66,18 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
         
         // Before today: Paid transactions
-        const paidTransactions = filteredTransactions.filter(t => t.isPaid && new Date(t.date).getDate() < dayToDisplay);
+        const paidTransactions = transactions.filter(t => t.isPaid && new Date(t.date).getDate() < dayToDisplay);
         const totalPaid = paidTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
         const totalReceived = paidTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0);
         const balancePaid = totalReceived - totalPaid;
         
         // After today: Pending transactions
-        const pendingTransactions = filteredTransactions.filter(t => !t.isPaid && new Date(t.date).getDate() >= dayToDisplay);
+        const pendingTransactions = transactions.filter(t => !t.isPaid && new Date(t.date).getDate() >= dayToDisplay);
         const totalToPay = pendingTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
         const totalToReceive = pendingTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0);
         
         // Current balance (all paid transactions so far)
-        const allPaidTransactions = filteredTransactions.filter(t => t.isPaid);
+        const allPaidTransactions = transactions.filter(t => t.isPaid);
         const currentBalance = allPaidTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0) - 
                                allPaidTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
                                
@@ -94,7 +94,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             totalToReceive,
             projectedResult
         };
-    }, [filteredTransactions, currentDate]);
+    }, [transactions, currentDate]);
 
     const handleSort = (key: SortKey) => {
         setSortConfig(current => ({
@@ -164,46 +164,25 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-4">
-                <div className="flex flex-wrap gap-4 items-center">
-                    <select value={filters.type} onChange={e => setFilters({...filters, type: e.target.value})} className="p-2 border rounded-lg text-sm bg-gray-50 font-medium text-gray-700 min-w-[120px]">
-                        <option value="all">Todos os Tipos</option><option value="income">Entradas</option><option value="expense">Saídas</option>
-                    </select>
-                    <select value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})} className="p-2 border rounded-lg text-sm bg-gray-50 font-medium text-gray-700 min-w-[120px]">
-                        <option value="all">Todos os Status</option><option value="paid">Realizado</option><option value="pending">Pendente</option>
-                    </select>
-                    <select value={filters.category} onChange={e => setFilters({...filters, category: e.target.value})} className="p-2 border rounded-lg text-sm bg-gray-50 font-medium text-gray-700 min-w-[140px]">
-                        <option value="all">Todas as Categorias</option>
-                        {[...incomeCategories, ...expenseCategories].map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <div className="flex-1 relative">
-                        <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400"/>
-                        <input type="text" placeholder="Buscar..." value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} className="w-full pl-10 p-2 border rounded-lg text-sm bg-gray-50" />
+            {/* Weekly Transactions */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <button 
+                    onClick={() => setShowWeeklyAlerts(!showWeeklyAlerts)} 
+                    className="w-full flex justify-between items-center text-sm font-bold text-gray-700"
+                >
+                    <span>Lançamentos da Semana</span>
+                    {showWeeklyAlerts ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+                {showWeeklyAlerts && (
+                    <div className="mt-2 space-y-2">
+                        {weeklyTransactions.length === 0 ? <p className="text-xs text-gray-500">Nenhum lançamento esta semana.</p> : weeklyTransactions.map(t => (
+                            <div key={t.id} className="flex justify-between text-xs p-2 bg-orange-50 rounded-lg text-orange-800">
+                                <span>{t.description}</span>
+                                <span>{formatCurrency(t.amount)}</span>
+                            </div>
+                        ))}
                     </div>
-                </div>
-                
-                {/* Second Row: Source Filter */}
-                <div className="flex gap-2">
-                    <button 
-                        onClick={() => setFilters({...filters, source: 'all'})} 
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${filters.source === 'all' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200'}`}
-                    >
-                        Todas as Origens
-                    </button>
-                    <button 
-                        onClick={() => setFilters({...filters, source: 'manual'})} 
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${filters.source === 'manual' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200'}`}
-                    >
-                        Manuais
-                    </button>
-                    <button 
-                        onClick={() => setFilters({...filters, source: 'imported'})} 
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${filters.source === 'imported' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-500 border-gray-200'}`}
-                    >
-                        Importadas
-                    </button>
-                </div>
+                )}
             </div>
 
             {/* Summary Cards */}
@@ -276,24 +255,46 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                 )}
             </div>
 
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mt-4">
-                <button 
-                    onClick={() => setShowWeeklyAlerts(!showWeeklyAlerts)} 
-                    className="w-full flex justify-between items-center text-sm font-bold text-gray-700"
-                >
-                    <span>Lançamentos da Semana</span>
-                    {showWeeklyAlerts ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-                {showWeeklyAlerts && (
-                    <div className="mt-2 space-y-2">
-                        {weeklyTransactions.length === 0 ? <p className="text-xs text-gray-500">Nenhum lançamento esta semana.</p> : weeklyTransactions.map(t => (
-                            <div key={t.id} className="flex justify-between text-xs p-2 bg-orange-50 rounded-lg text-orange-800">
-                                <span>{t.description}</span>
-                                <span>{formatCurrency(t.amount)}</span>
-                            </div>
-                        ))}
+            {/* Filters */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-4">
+                <div className="flex flex-wrap gap-4 items-center">
+                    <select value={filters.type} onChange={e => setFilters({...filters, type: e.target.value})} className="p-2 border rounded-lg text-sm bg-gray-50 font-medium text-gray-700 min-w-[120px]">
+                        <option value="all">Todos os Tipos</option><option value="income">Entradas</option><option value="expense">Saídas</option>
+                    </select>
+                    <select value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})} className="p-2 border rounded-lg text-sm bg-gray-50 font-medium text-gray-700 min-w-[120px]">
+                        <option value="all">Todos os Status</option><option value="paid">Realizado</option><option value="pending">Pendente</option>
+                    </select>
+                    <select value={filters.category} onChange={e => setFilters({...filters, category: e.target.value})} className="p-2 border rounded-lg text-sm bg-gray-50 font-medium text-gray-700 min-w-[140px]">
+                        <option value="all">Todas as Categorias</option>
+                        {[...incomeCategories, ...expenseCategories].map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <div className="flex-1 relative">
+                        <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400"/>
+                        <input type="text" placeholder="Buscar..." value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} className="w-full pl-10 p-2 border rounded-lg text-sm bg-gray-50" />
                     </div>
-                )}
+                </div>
+                
+                {/* Second Row: Source Filter */}
+                <div className="flex gap-2">
+                    <button 
+                        onClick={() => setFilters({...filters, source: 'all'})} 
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${filters.source === 'all' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-500 border-gray-200'}`}
+                    >
+                        Todas as Origens
+                    </button>
+                    <button 
+                        onClick={() => setFilters({...filters, source: 'manual'})} 
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${filters.source === 'manual' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200'}`}
+                    >
+                        Manuais
+                    </button>
+                    <button 
+                        onClick={() => setFilters({...filters, source: 'imported'})} 
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${filters.source === 'imported' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-500 border-gray-200'}`}
+                    >
+                        Importadas
+                    </button>
+                </div>
             </div>
 
             {/* Table */}

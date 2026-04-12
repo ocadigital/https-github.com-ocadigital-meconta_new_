@@ -156,7 +156,7 @@ export default function App() {
   }>({ name: '', type: 'CHECKING', color: 'bg-blue-600', balance: '', brand: 'MASTERCARD', limit: '', closingDay: '', dueDay: '' });
 
   // Filters - Added 'source'
-  const [filters, setFilters] = useState({ type: 'all', status: 'all', category: 'all', search: '', source: 'all', showDetails: true });
+  const [filters, setFilters] = useState({ type: 'all', status: 'all', category: 'all', search: '', source: 'all', showDetails: false });
   const [toastMessage, setToastMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
 
   // Init
@@ -544,9 +544,7 @@ export default function App() {
 
   const handleClearAllNotifications = async () => {
       try {
-          for (const t of activeNotifications) {
-              await storageService.ignoreAlert(t.id);
-          }
+          await Promise.all(activeNotifications.map(t => storageService.ignoreAlert(t.id)));
           setIgnoredNotifications(prev => [...prev, ...activeNotifications.map(t => t.id)]);
       } catch(e) { console.error(e); }
   };
