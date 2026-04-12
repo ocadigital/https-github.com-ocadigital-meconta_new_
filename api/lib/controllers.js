@@ -59,7 +59,6 @@ export async function categoriesHandler(req, res) {
 // --- CLOSURE ---
 export async function closureHandler(req, res) {
     try {
-        console.log("Closure handler called", req.method, req.query, req.body);
         const requesterId = req.headers['x-user-id'];
         if (!requesterId) return res.status(401).json({ error: 'Unauthorized' });
         const [userResult] = await pool.query('SELECT family_id FROM users WHERE id = ?', [requesterId]);
@@ -68,22 +67,17 @@ export async function closureHandler(req, res) {
 
         if (req.method === 'GET') {
             const { month, year } = req.query;
-            console.log("Closure GET", { familyId, month, year });
             const [rows] = await pool.query('SELECT status FROM monthly_closures WHERE family_id = ? AND month = ? AND year = ?', [familyId, month, year]);
             return res.status(200).json({ status: rows.length > 0 ? rows[0].status : 'open' });
         }
         
         if (req.method === 'POST') {
             const { month, year, status } = req.body;
-            console.log("Closure POST", { familyId, month, year, status });
             await pool.query('INSERT INTO monthly_closures (family_id, month, year, status, closed_at) VALUES (?, ?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE status = ?, closed_at = NOW()', [familyId, month, year, status, status]);
             return res.status(200).json({ success: true });
         }
         return res.status(405).json({ error: 'Method not allowed' });
-    } catch(e) { 
-        console.error("Closure handler error", e);
-        res.status(500).json({error: e.message}); 
-    }
+    } catch(e) { res.status(500).json({error: e.message}); }
 }
 
 // --- USERS ---

@@ -66,18 +66,18 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
         
         // Before today: Paid transactions
-        const paidTransactions = transactions.filter(t => t.isPaid && new Date(t.date).getDate() < dayToDisplay);
+        const paidTransactions = filteredTransactions.filter(t => t.isPaid && new Date(t.date).getDate() < dayToDisplay);
         const totalPaid = paidTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
         const totalReceived = paidTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0);
         const balancePaid = totalReceived - totalPaid;
         
         // After today: Pending transactions
-        const pendingTransactions = transactions.filter(t => !t.isPaid && new Date(t.date).getDate() >= dayToDisplay);
+        const pendingTransactions = filteredTransactions.filter(t => !t.isPaid && new Date(t.date).getDate() >= dayToDisplay);
         const totalToPay = pendingTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
         const totalToReceive = pendingTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0);
         
         // Current balance (all paid transactions so far)
-        const allPaidTransactions = transactions.filter(t => t.isPaid);
+        const allPaidTransactions = filteredTransactions.filter(t => t.isPaid);
         const currentBalance = allPaidTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0) - 
                                allPaidTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
                                
@@ -94,7 +94,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             totalToReceive,
             projectedResult
         };
-    }, [transactions, currentDate]);
+    }, [filteredTransactions, currentDate]);
 
     const handleSort = (key: SortKey) => {
         setSortConfig(current => ({
