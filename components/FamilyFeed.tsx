@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Heart, MessageSquare, Lock, Unlock, ShoppingBag, ArrowUpRight, ArrowDownRight, User, Target, Sparkles } from 'lucide-react';
 import { Transaction, TransactionType } from '../types';
 
@@ -14,8 +14,21 @@ interface FeedItem extends Omit<Transaction, 'type'> {
 }
 
 export const FamilyFeed: React.FC = () => {
-    const [feed, setFeed] = useState<FeedItem[]>([]);
+    const [allFeed, setAllFeed] = useState<FeedItem[]>([]);
+    const [displayedFeed, setDisplayedFeed] = useState<FeedItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const observer = useRef<IntersectionObserver | null>(null);
+    const lastItemRef = useCallback((node: HTMLDivElement | null) => {
+        if (loading) return;
+        if (observer.current) observer.current.disconnect();
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && displayedFeed.length < allFeed.length) {
+                setPage(prev => prev + 1);
+            }
+        });
+        if (node) observer.current.observe(node);
+    }, [loading, displayedFeed.length, allFeed.length]);
 
     const fetchFeed = async () => {
         try {
@@ -23,10 +36,10 @@ export const FamilyFeed: React.FC = () => {
             const res = await fetch('/api/transactions?mode=feed', {
                 headers: { 'X-User-Id': currentUserId || '' }
             });
-            if (res.ok) {
-                const data = await res.json();
-                setFeed(data);
-            }
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            const data = await res.json();
+            setAllFeed(data);
+            setDisplayedFeed(data.slice(0, 10));
         } catch (e) {
             console.error("Failed to load feed");
         } finally {
@@ -38,8 +51,12 @@ export const FamilyFeed: React.FC = () => {
         fetchFeed();
     }, []);
 
+    useEffect(() => {
+        setDisplayedFeed(allFeed.slice(0, page * 10));
+    }, [page, allFeed]);
+
     const toggleReaction = async (transactionId: string, type: 'LIKE' | 'CLAP') => {
-        setFeed(prev => prev.map(item => {
+        setAllFeed(prev => prev.map(item => {
             if (item.id === transactionId) {
                 const hasReacted = item.userReaction === type;
                 const newCount = (item.reactions[type] || 0) + (hasReacted ? -1 : 1);
@@ -50,11 +67,12 @@ export const FamilyFeed: React.FC = () => {
 
         try {
             const currentUserId = localStorage.getItem('finance_current_user_id');
-            await fetch('/api/transactions?mode=reaction', {
+            const res = await fetch('/api/transactions?mode=reaction', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUserId || '' },
                 body: JSON.stringify({ transactionId, reactionType: type })
             });
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         } catch (e) { fetchFeed(); }
     };
 
@@ -70,16 +88,16 @@ export const FamilyFeed: React.FC = () => {
     };
 
     if (loading) return <div className="p-8 text-center text-gray-400">Carregando novidades da família...</div>;
-    if (feed.length === 0) return <div className="flex flex-col items-center justify-center py-12 text-gray-400"><ShoppingBag className="w-12 h-12 mb-2 opacity-20" /><p>Nenhuma atividade recente.</p></div>;
+    if (allFeed.length === 0) return <div className="flex flex-col items-center justify-center py-12 text-gray-400"><ShoppingBag className="w-12 h-12 mb-2 opacity-20" /><p>Nenhuma atividade recente.</p></div>;
 
     return (
         <div className="space-y-6 max-w-3xl">
-            {feed.map((item) => {
+            {displayedFeed.map((item, index) => {
                 const isGoal = item.isGoal || item.type === 'Meta';
                 const isIncome = item.type === TransactionType.INCOME;
 
                 return (
-                    <div key={item.id} className={`bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border ${isGoal ? 'border-purple-200 dark:border-purple-900/30 ring-1 ring-purple-100 dark:ring-purple-900/20' : 'border-gray-100 dark:border-gray-700'} relative overflow-hidden group hover:shadow-md transition-all`}>
+                    <div key={item.id} ref={index === displayedFeed.length - 1 ? lastItemRef : null} className={`bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border ${isGoal ? 'border-purple-200 dark:border-purple-900/30 ring-1 ring-purple-100 dark:ring-purple-900/20' : 'border-gray-100 dark:border-gray-700'} relative overflow-hidden group hover:shadow-md transition-all`}>
                         <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-sm ${item.avatarColor}`}>{item.userName.charAt(0).toUpperCase()}</div>
@@ -105,7 +123,6 @@ export const FamilyFeed: React.FC = () => {
                                 {item.store && <span className="text-xs bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded text-gray-500 dark:text-gray-400 flex items-center gap-1">{isGoal ? 'Objetivo' : 'Store'}: {item.store}</span>}
                             </div>
 
-                            {/* Show Image for Goals */}
                             {isGoal && item.imageUrl && (
                                 <div className="mt-3 mb-4 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 relative group/image">
                                     <img src={item.imageUrl} alt="Meta Visual" className="w-full h-48 object-cover transform group-hover/image:scale-105 transition-transform duration-700" />

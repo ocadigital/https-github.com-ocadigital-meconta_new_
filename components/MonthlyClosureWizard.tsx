@@ -24,6 +24,7 @@ export const MonthlyClosureWizard: React.FC<MonthlyClosureWizardProps> = ({ mont
                 const res = await fetch(`/api/transactions?mode=closure&month=${month}&year=${year}`, {
                     headers: { 'X-User-Id': currentUserId || '' }
                 });
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 const data = await res.json();
                 setStats(data.stats);
             } catch (e) { console.error(e); } finally { setLoading(false); }
@@ -40,20 +41,23 @@ export const MonthlyClosureWizard: React.FC<MonthlyClosureWizardProps> = ({ mont
         const idsToRollover = Object.entries(pendingAction).filter(([_, action]) => action === 'rollover').map(([id]) => id);
 
         try {
-            await fetch(`/api/transactions?mode=closure&month=${month}&year=${year}`, {
+            const res1 = await fetch(`/api/transactions?mode=closure&month=${month}&year=${year}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUserId || '' },
                 body: JSON.stringify({ 
                     action: 'rollover', pendingIdsToRollover: idsToRollover 
                 })
             });
-            await fetch(`/api/transactions?mode=closure&month=${month}&year=${year}`, {
+            if (!res1.ok) throw new Error(`HTTP error! status: ${res1.status}`);
+            
+            const res2 = await fetch(`/api/transactions?mode=closure&month=${month}&year=${year}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUserId || '' },
                 body: JSON.stringify({ 
                     action: 'close', totalIncome: stats.totalIncome, totalExpense: stats.totalExpense, finalBalance: stats.balance 
                 })
             });
+            if (!res2.ok) throw new Error(`HTTP error! status: ${res2.status}`);
             onFinished();
         } catch (e) { alert("Erro ao fechar mês."); setLoading(false); }
     };

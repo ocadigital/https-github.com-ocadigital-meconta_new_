@@ -56,6 +56,30 @@ export async function categoriesHandler(req, res) {
     } catch(e) { res.status(500).json({error: e.message}); }
 }
 
+// --- CLOSURE ---
+export async function closureHandler(req, res) {
+    try {
+        const requesterId = req.headers['x-user-id'];
+        if (!requesterId) return res.status(401).json({ error: 'Unauthorized' });
+        const [userResult] = await pool.query('SELECT family_id FROM users WHERE id = ?', [requesterId]);
+        if (userResult.length === 0) return res.status(403).json({ error: 'User invalid' });
+        const familyId = userResult[0].family_id;
+
+        if (req.method === 'GET') {
+            const { month, year } = req.query;
+            const [rows] = await pool.query('SELECT status FROM monthly_closures WHERE family_id = ? AND month = ? AND year = ?', [familyId, month, year]);
+            return res.status(200).json({ status: rows.length > 0 ? rows[0].status : 'open' });
+        }
+        
+        if (req.method === 'POST') {
+            const { month, year, status } = req.body;
+            await pool.query('INSERT INTO monthly_closures (family_id, month, year, status, closed_at) VALUES (?, ?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE status = ?, closed_at = NOW()', [familyId, month, year, status, status]);
+            return res.status(200).json({ success: true });
+        }
+        return res.status(405).json({ error: 'Method not allowed' });
+    } catch(e) { res.status(500).json({error: e.message}); }
+}
+
 // --- USERS ---
 export async function usersHandler(req, res) {
   try {
@@ -70,6 +94,7 @@ export async function usersHandler(req, res) {
             try { await connection.query("ALTER TABLE users ADD COLUMN avatar_color VARCHAR(50)"); } catch (e) {}
             try { await connection.query("ALTER TABLE users ADD COLUMN referred_by VARCHAR(255)"); } catch (e) {}
             try { await connection.query("CREATE TABLE IF NOT EXISTS alert_acknowledgements (user_id VARCHAR(255) NOT NULL, alert_key VARCHAR(255) NOT NULL, created_at DATETIME DEFAULT NOW(), PRIMARY KEY (user_id, alert_key))"); } catch(e) {}
+            try { await connection.query("CREATE TABLE IF NOT EXISTS monthly_closures (id INT AUTO_INCREMENT PRIMARY KEY, family_id VARCHAR(255), month INT, year INT, status VARCHAR(20), closed_at DATETIME, UNIQUE KEY unique_closure (family_id, month, year))"); } catch(e) {}
         } finally { connection.release(); }
     }
 

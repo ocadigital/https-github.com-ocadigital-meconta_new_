@@ -13,19 +13,23 @@ const api = async (endpoint: string, options: RequestInit = {}) => {
   
   try {
     const res = await fetch(`${baseUrl}/api/${endpoint}`, { ...options, headers });
-    if (!res.ok) { 
-        // Try to parse JSON error first
-        let errorMessage = `API Error ${res.status}`;
+    
+    let data;
+    try {
+        const text = await res.text();
         try {
-            const jsonError = await res.json();
-            if (jsonError.error) errorMessage = jsonError.error;
+            data = JSON.parse(text);
         } catch (e) {
-            const text = await res.text().catch(() => "Unknown error");
-            if (text) errorMessage = `${errorMessage}: ${text}`;
+            data = text;
         }
-        throw new Error(errorMessage); 
+    } catch (e) {
+        data = null;
     }
-    return await res.json();
+
+    if (!res.ok) {
+        throw new Error(data?.error || `API Error ${res.status}`);
+    }
+    return data;
   } catch (error) { 
       console.error(`Error fetching ${endpoint}:`, error); 
       throw error; 

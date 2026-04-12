@@ -19,23 +19,29 @@ const callAiApi = async (action: string, payload: any) => {
 
   if (!response.ok) {
     let errorMsg = "Erro na comunicação com IA";
-    try {
-        const errorData = await response.json();
-        if (errorData.error === 'LIMIT_REACHED') {
-           throw new Error(`LIMIT_REACHED:${errorData.plan}:${errorData.feature}`);
-        }
-        
-        // Debugging Aid: If backend returns list of available vars, log it
-        if (errorData.debug_available_env_vars) {
-            console.error("DEBUG: Server Env Vars Available:", errorData.debug_available_env_vars);
-            console.error("DEBUG: Expected 'API_KEY' or 'GOOGLE_API_KEY' but it was missing.");
-        }
+    const contentType = response.headers.get("content-type");
+    const isJson = contentType && contentType.includes("application/json");
 
-        errorMsg = errorData.error || errorMsg;
-    } catch (e) {
+    if (isJson) {
+        try {
+            const errorData = await response.json();
+            if (errorData.error === 'LIMIT_REACHED') {
+               throw new Error(`LIMIT_REACHED:${errorData.plan}:${errorData.feature}`);
+            }
+            
+            // Debugging Aid: If backend returns list of available vars, log it
+            if (errorData.debug_available_env_vars) {
+                console.error("DEBUG: Server Env Vars Available:", errorData.debug_available_env_vars);
+                console.error("DEBUG: Expected 'API_KEY' or 'GOOGLE_API_KEY' but it was missing.");
+            }
+
+            errorMsg = errorData.error || errorMsg;
+        } catch (e) {}
+    } else {
         // If response is not JSON (e.g. HTML 500 page from Vercel), read text
         const text = await response.text();
         console.error("Non-JSON API Error:", text);
+        errorMsg = `Erro ${response.status}: ${text.substring(0, 100)}`;
     }
     throw new Error(errorMsg);
   }

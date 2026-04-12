@@ -90,7 +90,26 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const { showClosureWizard, closureTargetDate, handleCloseMonth, closeWizard } = useMonthClosure(currentDate);
+  const [isPrevMonthClosed, setIsPrevMonthClosed] = useState(true);
+
+  useEffect(() => {
+      const checkPrevMonthClosure = async () => {
+          const today = new Date();
+          const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+          const currentUserId = localStorage.getItem('finance_current_user_id');
+          try {
+              const res = await fetch(`/api/closure?month=${prevMonth.getMonth() + 1}&year=${prevMonth.getFullYear()}`, {
+                  headers: { 'X-User-Id': currentUserId || '' }
+              });
+              if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+              const data = await res.json();
+              setIsPrevMonthClosed(data.status === 'closed');
+          } catch (e) { console.error(e); }
+      };
+      checkPrevMonthClosure();
+  }, []);
+
+  const { showClosureWizard, closureTargetDate, handleCloseMonth, closeWizard } = useMonthClosure(currentDate, isPrevMonthClosed);
   const [dashboardScope, setDashboardScope] = useState<'family' | 'personal'>('family');
   
   // Profile Modals
@@ -755,6 +774,11 @@ export default function App() {
 
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white border-b border-gray-100 p-4 space-y-2">
+            <div className="flex justify-end">
+               <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+                   <X className="w-6 h-6" />
+               </button>
+            </div>
             <button onClick={() => { setView('dashboard'); setIsMobileMenuOpen(false); }} className="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50">Visão Geral</button>
             <button onClick={() => { setView('feed'); setIsMobileMenuOpen(false); }} className="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50">Feed da Família</button>
             <button onClick={() => { setView('transactions'); setIsMobileMenuOpen(false); }} className="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50">Lançamentos</button>
@@ -833,6 +857,8 @@ export default function App() {
                {view === 'visualizer' && <Visualizer />}
                {view === 'transactions' && (
                    <TransactionsView 
+                       transactions={transactions}
+                       isPrevMonthClosed={isPrevMonthClosed}
                        filteredTransactions={filteredTransactions}
                        stats={stats}
                        filters={filters}

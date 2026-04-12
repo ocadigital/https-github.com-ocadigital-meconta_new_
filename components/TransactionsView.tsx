@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { FileText, Plus, Search, Store, Edit2, CheckCircle, ArrowUp, ArrowDown, ChevronUp, ChevronDown, Trash2, X, Circle, Copy } from 'lucide-react';
 import { Transaction, TransactionType, User } from '../types';
 
 interface TransactionsViewProps {
     filteredTransactions: Transaction[];
+    transactions: Transaction[];
     stats: any;
     filters: any;
     setFilters: (filters: any) => void;
@@ -20,18 +21,26 @@ interface TransactionsViewProps {
     onDeleteTransactions: (ids: string[]) => void;
     onDuplicateTransaction: (t: Transaction) => void;
     handleCloseMonth: () => void;
+    isPrevMonthClosed: boolean;
 }
 
 type SortKey = 'date' | 'description' | 'category' | 'amount' | 'isPaid';
 
 export const TransactionsView: React.FC<TransactionsViewProps> = ({
-    filteredTransactions, stats, filters, setFilters, incomeCategories, expenseCategories,
+    filteredTransactions, transactions, stats, filters, setFilters, incomeCategories, expenseCategories,
     formatCurrency, formatDate, users, handleTogglePaid, handleEditTransaction,
-    setShowImportModal, setShowAddModal, DateNavigatorComponent, onDeleteTransactions, onDuplicateTransaction, handleCloseMonth
+    setShowImportModal, setShowAddModal, DateNavigatorComponent, onDeleteTransactions, onDuplicateTransaction, handleCloseMonth, isPrevMonthClosed
 }) => {
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' });
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    const canCloseMonth = useMemo(() => {
+        const today = new Date();
+        const isFirstTenDays = today.getDate() <= 10;
+        const isLastTenDays = today.getDate() >= new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate() - 10;
+        return isFirstTenDays || isLastTenDays || !isPrevMonthClosed;
+    }, [isPrevMonthClosed]);
 
     const progressStats = useMemo(() => {
         const today = new Date().getDate();
@@ -206,20 +215,27 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                 <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden">
                     <div className="absolute top-0 left-0 h-full bg-blue-500" style={{ width: `${progressStats.progress}%` }}></div>
                     {/* Today's Marker */}
-                    {new Date().getMonth() === new Date().getMonth() && new Date().getFullYear() === new Date().getFullYear() && (
-                        <div className="absolute top-[-20px] text-[10px] font-bold text-blue-600" style={{ left: `${progressStats.progress}%`, transform: 'translateX(-50%)' }}>
-                            {new Date().getDate()}
-                        </div>
-                    )}
+                    <div className="absolute top-[-20px] text-[10px] font-bold text-blue-600" style={{ left: `${progressStats.progress}%`, transform: 'translateX(-50%)' }}>
+                        {new Date().getDate()}
+                    </div>
                     <div className="absolute top-0 left-0 h-full w-0.5 bg-white" style={{ left: `${progressStats.progress}%` }}></div>
                 </div>
                 
-                <button 
-                    onClick={() => setFilters({...filters, showDetails: !filters.showDetails})} 
-                    className="w-full flex justify-center py-1 text-gray-400 hover:text-gray-600"
-                >
-                    {filters.showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
+                <div className="flex gap-2">
+                    <button 
+                        onClick={handleCloseMonth}
+                        disabled={!canCloseMonth}
+                        className={`px-4 py-2 rounded-xl font-bold text-sm transition-colors ${canCloseMonth ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+                    >
+                        Fechar Mês
+                    </button>
+                    <button 
+                        onClick={() => setFilters({...filters, showDetails: !filters.showDetails})} 
+                        className="flex-1 flex justify-center py-2 text-gray-400 hover:text-gray-600 border border-gray-200 rounded-xl"
+                    >
+                        {filters.showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                </div>
 
                 {filters.showDetails && (
                     <div className="grid grid-cols-2 gap-4 mt-2 text-xs">

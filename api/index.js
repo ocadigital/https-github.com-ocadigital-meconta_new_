@@ -28,6 +28,8 @@ async function handler(req, res) {
       return controllers.accountsHandler(req, res);
     case 'categories':
       return controllers.categoriesHandler(req, res);
+    case 'closure':
+      return controllers.closureHandler(req, res);
     case 'ai':
       return controllers.aiHandler(req, res);
     case 'goals':
