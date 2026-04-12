@@ -74,6 +74,7 @@ export interface Transaction {
   // Feed Logic (populated on fetch)
   reactions?: { [key: string]: number }; // e.g., { 'LIKE': 2, 'SAD': 1 }
   userReaction?: string | null; // The reaction of the current user
+  goalId?: string; // Link to a Goal/Dream
 }
 
 export interface Goal {

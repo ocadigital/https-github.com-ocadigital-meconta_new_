@@ -120,7 +120,7 @@ export const generateMonthlyReport = (
         t.description + (t.store ? ` (${t.store})` : ''),
         t.category,
         t.type === TransactionType.INCOME ? 'Entrada' : 'Saída',
-        t.isPaid ? 'Pago' : 'Pendente',
+        t.isPaid ? 'Realizado' : 'Pendente',
         formatCurrency(t.amount)
       ];
     });

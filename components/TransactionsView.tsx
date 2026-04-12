@@ -19,7 +19,7 @@ interface TransactionsViewProps {
     DateNavigatorComponent: React.ReactNode;
     onDeleteTransactions: (ids: string[]) => void;
     onDuplicateTransaction: (t: Transaction) => void;
-    parseDate: (dateString: string) => Date;
+    handleCloseMonth: () => void;
 }
 
 type SortKey = 'date' | 'description' | 'category' | 'amount' | 'isPaid';
@@ -27,7 +27,7 @@ type SortKey = 'date' | 'description' | 'category' | 'amount' | 'isPaid';
 export const TransactionsView: React.FC<TransactionsViewProps> = ({
     filteredTransactions, stats, filters, setFilters, incomeCategories, expenseCategories,
     formatCurrency, formatDate, users, handleTogglePaid, handleEditTransaction,
-    setShowImportModal, setShowAddModal, DateNavigatorComponent, onDeleteTransactions, onDuplicateTransaction, parseDate
+    setShowImportModal, setShowAddModal, DateNavigatorComponent, onDeleteTransactions, onDuplicateTransaction
 }) => {
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' });
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -142,7 +142,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                         <option value="all">Todos os Tipos</option><option value="income">Entradas</option><option value="expense">Saídas</option>
                     </select>
                     <select value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})} className="p-2 border rounded-lg text-sm bg-gray-50 font-medium text-gray-700 min-w-[120px]">
-                        <option value="all">Todos os Status</option><option value="paid">Pago</option><option value="pending">Pendente</option>
+                        <option value="all">Todos os Status</option><option value="paid">Realizado</option><option value="pending">Pendente</option>
                     </select>
                     <select value={filters.category} onChange={e => setFilters({...filters, category: e.target.value})} className="p-2 border rounded-lg text-sm bg-gray-50 font-medium text-gray-700 min-w-[140px]">
                         <option value="all">Todas as Categorias</option>
@@ -188,7 +188,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                     <p className="text-xl font-bold text-gray-900">{formatCurrency(stats.toReceive)}</p>
                 </div>
                 <div className="bg-red-50 border border-red-100 p-4 rounded-xl">
-                    <p className="text-xs font-bold text-red-700 uppercase mb-1">PAGO</p>
+                    <p className="text-xs font-bold text-red-700 uppercase mb-1">REALIZADO</p>
                     <p className="text-xl font-bold text-gray-900">{formatCurrency(stats.paid)}</p>
                 </div>
                 <div className="bg-white border-2 border-dashed border-red-200 p-4 rounded-xl">
@@ -200,28 +200,44 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             {/* Progress Bar */}
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex justify-between text-xs font-bold text-gray-500 mb-2">
-                    <span>Início do Mês</span>
-                    <span>Fim do Mês</span>
+                    <span>01</span>
+                    <span>{new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()}</span>
                 </div>
                 <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden">
                     <div className="absolute top-0 left-0 h-full bg-blue-500" style={{ width: `${progressStats.progress}%` }}></div>
+                    {/* Today's Marker */}
+                    {new Date().getMonth() === new Date().getMonth() && new Date().getFullYear() === new Date().getFullYear() && (
+                        <div className="absolute top-[-20px] text-[10px] font-bold text-blue-600" style={{ left: `${progressStats.progress}%`, transform: 'translateX(-50%)' }}>
+                            {new Date().getDate()}
+                        </div>
+                    )}
                     <div className="absolute top-0 left-0 h-full w-0.5 bg-white" style={{ left: `${progressStats.progress}%` }}></div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mt-4 text-xs">
-                    <div className="bg-gray-50 p-2 rounded-lg">
-                        <p className="text-gray-500 font-bold uppercase">Até Hoje (Pago)</p>
-                        <p className="text-gray-900 font-bold">Pago: {formatCurrency(progressStats.totalPaid)}</p>
-                        <p className="text-gray-900 font-bold">Recebido: {formatCurrency(progressStats.totalReceived)}</p>
-                        <p className="text-gray-900 font-bold">Saldo: {formatCurrency(progressStats.balancePaid)}</p>
+                
+                <button 
+                    onClick={() => setFilters({...filters, showDetails: !filters.showDetails})} 
+                    className="w-full flex justify-center py-1 text-gray-400 hover:text-gray-600"
+                >
+                    {filters.showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {filters.showDetails && (
+                    <div className="grid grid-cols-2 gap-4 mt-2 text-xs">
+                        <div className="bg-gray-50 p-2 rounded-lg">
+                            <p className="text-gray-500 font-bold uppercase">Até Hoje (Realizado)</p>
+                            <p className="text-gray-900 font-bold">Realizado: {formatCurrency(progressStats.totalPaid)}</p>
+                            <p className="text-gray-900 font-bold">Recebido: {formatCurrency(progressStats.totalReceived)}</p>
+                            <p className="text-gray-900 font-bold">Saldo: {formatCurrency(progressStats.balancePaid)}</p>
+                        </div>
+                        <div className="bg-gray-50 p-2 rounded-lg">
+                            <p className="text-gray-500 font-bold uppercase">Após Hoje (Pendente)</p>
+                            <p className="text-gray-900 font-bold">Saldo Atual: {formatCurrency(progressStats.currentBalance)}</p>
+                            <p className="text-gray-900 font-bold">A Receber: {formatCurrency(progressStats.totalToReceive)}</p>
+                            <p className="text-gray-900 font-bold">A Pagar: {formatCurrency(progressStats.totalToPay)}</p>
+                            <p className="text-gray-900 font-bold">Resultado: {formatCurrency(progressStats.projectedResult)}</p>
+                        </div>
                     </div>
-                    <div className="bg-gray-50 p-2 rounded-lg">
-                        <p className="text-gray-500 font-bold uppercase">Após Hoje (Pendente)</p>
-                        <p className="text-gray-900 font-bold">Saldo Atual: {formatCurrency(progressStats.currentBalance)}</p>
-                        <p className="text-gray-900 font-bold">A Receber: {formatCurrency(progressStats.totalToReceive)}</p>
-                        <p className="text-gray-900 font-bold">A Pagar: {formatCurrency(progressStats.totalToPay)}</p>
-                        <p className="text-gray-900 font-bold">Resultado: {formatCurrency(progressStats.projectedResult)}</p>
-                    </div>
-                </div>
+                )}
             </div>
 
             {/* Table */}
@@ -282,12 +298,12 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                                     </td>
                                     <td className="p-4">
                                         <span className={`text-xs px-2 py-1 rounded-full font-bold ${t.isPaid ? 'bg-red-100 text-red-700' : 'border border-gray-200 text-gray-500'}`}>
-                                            {t.isPaid ? 'Pago' : 'Pendente'}
+                                            {t.isPaid ? 'Realizado' : 'Pendente'}
                                         </span>
                                     </td>
                                     <td className="p-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <button onClick={(e) => { e.stopPropagation(); handleTogglePaid(t); }} className="text-gray-400 hover:text-green-600 p-2" title={t.isPaid ? "Marcar como pendente" : "Marcar como pago"}>
+                                            <button onClick={(e) => { e.stopPropagation(); handleTogglePaid(t); }} className="text-gray-400 hover:text-green-600 p-2" title={t.isPaid ? "Marcar como pendente" : "Marcar como realizado"}>
                                                 {t.isPaid ? <CheckCircle className="w-5 h-5 text-green-600" /> : <Circle className="w-5 h-5" />}
                                             </button>
                                             <button onClick={() => onDuplicateTransaction(t)} className="text-gray-400 hover:text-indigo-600 p-2" title="Duplicar">

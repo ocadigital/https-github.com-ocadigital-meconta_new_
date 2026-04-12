@@ -27,7 +27,6 @@ interface DashboardViewProps {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
     stats, dashboardCharts, dashboardScope, setDashboardScope,
-    handleCloseMonth, handlePrintReport, activeNotifications, showNotifications, setShowNotifications,
     DateNavigatorComponent, formatCurrency, filteredTransactions
 }) => {
     
@@ -56,9 +55,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-3">
-                    <button onClick={handleCloseMonth} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-indigo-200 transition-transform hover:scale-105 active:scale-95">
-                        <CheckCircle className="w-4 h-4"/> Fechar Mês
-                    </button>
                     <button onClick={handlePrintReport} className="bg-white hover:bg-gray-50 text-gray-700 p-2.5 rounded-xl border border-gray-200 shadow-sm transition-colors" title="Baixar Relatório">
                         <FileDown className="w-5 h-5"/>
                     </button>
@@ -87,7 +83,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500 font-bold">Saídas</span>
                     </div>
                     <h3 className="text-2xl font-extrabold text-gray-900 mb-1">{formatCurrency(stats.expense)}</h3>
-                    <p className="text-xs text-gray-400">Pago: {formatCurrency(stats.paid)} | {stats.expense > 0 ? Math.round((stats.paid/stats.expense)*100) : 0}%</p>
+                    <p className="text-xs text-gray-400">Realizado: {formatCurrency(stats.paid)} | {stats.expense > 0 ? Math.round((stats.paid/stats.expense)*100) : 0}%</p>
                 </div>
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex justify-between mb-4">

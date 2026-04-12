@@ -3,7 +3,7 @@ import {
   Plus, Calendar, Wallet, MessageCircle, Image as ImageIcon,
   Settings, AlertTriangle, LogOut, Shield, Menu, X, LayoutDashboard, MessageSquare, Bell, FileText, Lock, Trash2, CheckCircle, Store, Tag, AlignLeft, DollarSign, Edit2, Ban, Eye, PanelLeft
 } from 'lucide-react';
-import { Transaction, TransactionType, User, BankAccount, BankAccountType, CardBrand, PaymentMethod } from './types';
+import { Transaction, TransactionType, User, BankAccount, BankAccountType, CardBrand, PaymentMethod, Goal } from './types';
 import { MONTHS, APP_VERSION } from './constants';
 import { ReceiptUploader } from './components/ReceiptUploader';
 import { ChatAssistant } from './components/ChatAssistant';
@@ -74,6 +74,7 @@ export default function App() {
   // Data
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [incomeCategories, setIncomeCategories] = useState<string[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<string[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -126,6 +127,7 @@ export default function App() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('DEBIT');
   const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [selectedCard, setSelectedCard] = useState<string>(''); 
+  const [selectedGoal, setSelectedGoal] = useState<string>(''); 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Account Form
@@ -135,7 +137,7 @@ export default function App() {
   }>({ name: '', type: 'CHECKING', color: 'bg-blue-600', balance: '', brand: 'MASTERCARD', limit: '', closingDay: '', dueDay: '' });
 
   // Filters - Added 'source'
-  const [filters, setFilters] = useState({ type: 'all', status: 'all', category: 'all', search: '', source: 'all' });
+  const [filters, setFilters] = useState({ type: 'all', status: 'all', category: 'all', search: '', source: 'all', showDetails: true });
   const [toastMessage, setToastMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
 
   // Init
@@ -182,17 +184,19 @@ export default function App() {
   const loadData = async () => {
       setIsLoadingData(true);
       try {
-          const [us, ts, cats, accs] = await Promise.all([
+          const [us, ts, cats, accs, gs] = await Promise.all([
               storageService.getUsers(),
               storageService.getTransactions(),
               storageService.getCategories(),
-              storageService.getAccounts()
+              storageService.getAccounts(),
+              storageService.getGoals()
           ]);
           setUsers(us);
           setTransactions(ts);
           setIncomeCategories(cats.income);
           setExpenseCategories(cats.expense);
           setAccounts(accs);
+          setGoals(gs);
           
           const currentId = localStorage.getItem('finance_current_user_id');
           const me = us.find(u => u.id === currentId);
@@ -394,6 +398,7 @@ export default function App() {
               paymentMethod,
               accountId: paymentMethod === 'CREDIT' ? undefined : selectedAccount,
               cardId: paymentMethod === 'CREDIT' ? selectedCard : undefined,
+              goalId: selectedGoal || undefined,
               installmentTotal: recurrenceMode === 'installment' ? installmentTotal : 1,
               frequencyMonths: recurrenceMode === 'fixed' ? frequencyMonths : undefined,
               receiptImage,
@@ -416,7 +421,7 @@ export default function App() {
       setTransactions(prev => prev.map(tr => tr.id === updatedT.id ? updatedT : tr));
       try {
           await storageService.updateTransaction(updatedT);
-          showToast(updatedT.isPaid ? "Marcado como Pago" : "Marcado como Pendente");
+          showToast(updatedT.isPaid ? "Marcado como Realizado" : "Marcado como Pendente");
       } catch (e: any) {
           showToast("Erro ao atualizar status", "error");
           loadData();
@@ -557,6 +562,7 @@ export default function App() {
     setPaymentMethod('DEBIT');
     setSelectedAccount('');
     setSelectedCard('');
+    setSelectedGoal('');
   };
 
   const handleEditTransaction = async (t: Transaction) => {
@@ -590,6 +596,7 @@ export default function App() {
       setPaymentMethod(t.paymentMethod);
       setSelectedAccount(t.accountId || '');
       setSelectedCard(t.cardId || '');
+      setSelectedGoal(t.goalId || '');
       setShowAddModal(true);
   };
 
@@ -856,7 +863,6 @@ export default function App() {
                        users={users}
                        dashboardScope={dashboardScope}
                        setDashboardScope={setDashboardScope}
-                       handleCloseMonth={handleCloseMonth}
                        handlePrintReport={handlePrintReport}
                        activeNotifications={activeNotifications}
                        showNotifications={false}
@@ -1061,6 +1067,13 @@ export default function App() {
                                             {accounts.flatMap(a => a.cards || []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                        </select>
                                    </div>
+                                   <div className="mt-3">
+                                       <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Sonho (Opcional)</label>
+                                       <select value={selectedGoal} onChange={e => setSelectedGoal(e.target.value)} className="w-full p-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 text-sm">
+                                            <option value="">Selecione o Sonho...</option>
+                                            {goals.map(g => <option key={g.id} value={g.id}>{g.description}</option>)}
+                                       </select>
+                                   </div>
                                </div>
                            </div>
                            <div className="grid grid-cols-2 gap-4">
@@ -1071,7 +1084,7 @@ export default function App() {
                            <div className="flex gap-4 pt-2">
                                <button type="button" onClick={() => setIsPaid(!isPaid)} className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all border ${isPaid ? 'bg-green-100 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
                                    {isPaid ? <CheckCircle className="w-5 h-5"/> : <div className="w-5 h-5 border-2 border-gray-400 rounded-full"></div>}
-                                   {type === TransactionType.INCOME ? (isPaid ? "Recebido" : "A Receber") : (isPaid ? "Pago" : "A Pagar")}
+                                   {type === TransactionType.INCOME ? (isPaid ? "Recebido" : "A Receber") : (isPaid ? "Realizado" : "A Pagar")}
                                 </button>
                                <button type="button" onClick={() => setIsPrivate(!isPrivate)} className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all border ${isPrivate ? 'bg-blue-100 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>{isPrivate ? 'Privado' : 'Público no Feed'}</button>
                            </div>
