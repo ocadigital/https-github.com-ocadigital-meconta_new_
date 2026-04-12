@@ -19,6 +19,7 @@ interface TransactionsViewProps {
     DateNavigatorComponent: React.ReactNode;
     onDeleteTransactions: (ids: string[]) => void;
     onDuplicateTransaction: (t: Transaction) => void;
+    parseDate: (dateString: string) => Date;
 }
 
 type SortKey = 'date' | 'description' | 'category' | 'amount' | 'isPaid';
@@ -31,6 +32,40 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' });
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    const progressStats = useMemo(() => {
+        const today = new Date().getDate();
+        const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+        
+        // Before today: Paid transactions
+        const paidTransactions = filteredTransactions.filter(t => t.isPaid && new Date(t.date).getDate() < today);
+        const totalPaid = paidTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
+        const totalReceived = paidTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0);
+        const balancePaid = totalReceived - totalPaid;
+        
+        // After today: Pending transactions
+        const pendingTransactions = filteredTransactions.filter(t => !t.isPaid && new Date(t.date).getDate() >= today);
+        const totalToPay = pendingTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
+        const totalToReceive = pendingTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0);
+        
+        // Current balance (all paid transactions so far)
+        const allPaidTransactions = filteredTransactions.filter(t => t.isPaid);
+        const currentBalance = allPaidTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0) - 
+                               allPaidTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
+                               
+        const projectedResult = currentBalance + totalToReceive - totalToPay;
+        
+        return {
+            progress: (today / daysInMonth) * 100,
+            totalPaid,
+            totalReceived,
+            balancePaid,
+            currentBalance,
+            totalToPay,
+            totalToReceive,
+            projectedResult
+        };
+    }, [filteredTransactions]);
 
     const handleSort = (key: SortKey) => {
         setSortConfig(current => ({
@@ -159,6 +194,33 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                 <div className="bg-white border-2 border-dashed border-red-200 p-4 rounded-xl">
                     <p className="text-xs font-bold text-gray-500 uppercase mb-1">A PAGAR</p>
                     <p className="text-xl font-bold text-gray-900">{formatCurrency(stats.toPay)}</p>
+                </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex justify-between text-xs font-bold text-gray-500 mb-2">
+                    <span>Início do Mês</span>
+                    <span>Fim do Mês</span>
+                </div>
+                <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="absolute top-0 left-0 h-full bg-blue-500" style={{ width: `${progressStats.progress}%` }}></div>
+                    <div className="absolute top-0 left-0 h-full w-0.5 bg-white" style={{ left: `${progressStats.progress}%` }}></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-4 text-xs">
+                    <div className="bg-gray-50 p-2 rounded-lg">
+                        <p className="text-gray-500 font-bold uppercase">Até Hoje (Pago)</p>
+                        <p className="text-gray-900 font-bold">Pago: {formatCurrency(progressStats.totalPaid)}</p>
+                        <p className="text-gray-900 font-bold">Recebido: {formatCurrency(progressStats.totalReceived)}</p>
+                        <p className="text-gray-900 font-bold">Saldo: {formatCurrency(progressStats.balancePaid)}</p>
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded-lg">
+                        <p className="text-gray-500 font-bold uppercase">Após Hoje (Pendente)</p>
+                        <p className="text-gray-900 font-bold">Saldo Atual: {formatCurrency(progressStats.currentBalance)}</p>
+                        <p className="text-gray-900 font-bold">A Receber: {formatCurrency(progressStats.totalToReceive)}</p>
+                        <p className="text-gray-900 font-bold">A Pagar: {formatCurrency(progressStats.totalToPay)}</p>
+                        <p className="text-gray-900 font-bold">Resultado: {formatCurrency(progressStats.projectedResult)}</p>
+                    </div>
                 </div>
             </div>
 

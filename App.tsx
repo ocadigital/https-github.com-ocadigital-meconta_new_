@@ -522,6 +522,15 @@ export default function App() {
       } catch(e: any) { showToast("Erro ao excluir", "error"); }
   };
 
+  const handleClearAllNotifications = async () => {
+      try {
+          for (const t of activeNotifications) {
+              await storageService.ignoreAlert(t.id);
+          }
+          setIgnoredNotifications(prev => [...prev, ...activeNotifications.map(t => t.id)]);
+      } catch(e) { console.error(e); }
+  };
+
   const handleIgnoreNotification = async (id: string) => {
       try {
           await storageService.ignoreAlert(id);
