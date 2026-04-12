@@ -1,6 +1,6 @@
 import { Category, FixedTransactionTemplate, TransactionType } from './types';
 
-export const APP_VERSION = 'v3.5-LIVE';
+export const APP_VERSION = 'v4.0';
 
 export const CATEGORIES_INCOME = [
   Category.EMPRESTIMOS_ENTRADA,

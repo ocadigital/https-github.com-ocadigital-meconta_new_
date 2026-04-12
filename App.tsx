@@ -750,6 +750,12 @@ export default function App() {
                {showNotifications && (
                    <div className="absolute top-16 right-4 w-80 bg-white shadow-xl rounded-xl border border-gray-100 z-50 p-4 animate-in slide-in-from-top-2">
                        <h3 className="font-bold text-gray-900 mb-2 px-2">Notificações</h3>
+                       <button onClick={async () => {
+                           for (const t of activeNotifications) {
+                               await storageService.ignoreAlert(t.id);
+                           }
+                           setIgnoredNotifications(prev => [...prev, ...activeNotifications.map(t => t.id)]);
+                       }} className="text-xs text-blue-600 font-bold px-2 mb-2 hover:underline">Limpar</button>
                        {activeNotifications.length === 0 ? <p className="text-sm text-gray-500 px-2">Tudo em dia!</p> : (
                            <ul className="space-y-2 max-h-80 overflow-y-auto">
                                {activeNotifications.map(t => (

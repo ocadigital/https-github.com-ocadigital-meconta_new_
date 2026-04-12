@@ -59,12 +59,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <button onClick={handlePrintReport} className="bg-white hover:bg-gray-50 text-gray-700 p-2.5 rounded-xl border border-gray-200 shadow-sm transition-colors" title="Baixar Relatório">
                         <FileDown className="w-5 h-5"/>
                     </button>
-                    <div className="relative">
-                        <button onClick={() => setShowNotifications(!showNotifications)} className="bg-white hover:bg-gray-50 text-gray-700 p-2.5 rounded-xl border border-gray-200 shadow-sm transition-colors">
-                            <Bell className="w-5 h-5"/>
-                            {activeNotifications.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full font-bold">{activeNotifications.length}</span>}
-                        </button>
-                    </div>
                     {DateNavigatorComponent}
                 </div>
             </div>

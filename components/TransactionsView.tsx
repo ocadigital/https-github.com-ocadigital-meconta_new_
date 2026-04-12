@@ -34,6 +34,17 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' });
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showWeeklyAlerts, setShowWeeklyAlerts] = useState(false);
+
+    const weeklyTransactions = useMemo(() => {
+        const today = new Date();
+        const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+        const endOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+        return transactions.filter(t => {
+            const date = new Date(t.date);
+            return date >= startOfWeek && date <= endOfWeek;
+        });
+    }, [transactions]);
 
     const canCloseMonth = useMemo(() => {
         const today = new Date();
@@ -215,43 +226,63 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                 <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden">
                     <div className="absolute top-0 left-0 h-full bg-blue-500" style={{ width: `${progressStats.progress}%` }}></div>
                     {/* Today's Marker */}
-                    <div className="absolute top-[-20px] text-[10px] font-bold text-blue-600" style={{ left: `${progressStats.progress}%`, transform: 'translateX(-50%)' }}>
+                    <div className="absolute top-[-30px] text-[10px] font-bold text-blue-600" style={{ left: `${progressStats.progress}%`, transform: 'translateX(-50%)' }}>
                         {new Date().getDate()}
                     </div>
                     <div className="absolute top-0 left-0 h-full w-0.5 bg-white" style={{ left: `${progressStats.progress}%` }}></div>
                 </div>
                 
-                <div className="flex gap-2">
-                    <button 
-                        onClick={handleCloseMonth}
-                        disabled={!canCloseMonth}
-                        className={`px-4 py-2 rounded-xl font-bold text-sm transition-colors ${canCloseMonth ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
-                    >
-                        Fechar Mês
-                    </button>
-                    <button 
-                        onClick={() => setFilters({...filters, showDetails: !filters.showDetails})} 
-                        className="flex-1 flex justify-center py-2 text-gray-400 hover:text-gray-600 border border-gray-200 rounded-xl"
-                    >
-                        {filters.showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </button>
-                </div>
+                <button 
+                    onClick={() => setFilters({...filters, showDetails: !filters.showDetails})} 
+                    className="w-full flex justify-center py-2 text-gray-400 hover:text-gray-600 border border-gray-200 rounded-xl mt-2"
+                >
+                    {filters.showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
 
                 {filters.showDetails && (
-                    <div className="grid grid-cols-2 gap-4 mt-2 text-xs">
-                        <div className="bg-gray-50 p-2 rounded-lg">
-                            <p className="text-gray-500 font-bold uppercase">Até Hoje (Realizado)</p>
-                            <p className="text-gray-900 font-bold">Realizado: {formatCurrency(progressStats.totalPaid)}</p>
-                            <p className="text-gray-900 font-bold">Recebido: {formatCurrency(progressStats.totalReceived)}</p>
-                            <p className="text-gray-900 font-bold">Saldo: {formatCurrency(progressStats.balancePaid)}</p>
+                    <div className="mt-2">
+                        <div className="grid grid-cols-2 gap-4 text-xs">
+                            <div className="bg-gray-50 p-2 rounded-lg">
+                                <p className="text-gray-500 font-bold uppercase">Até Hoje (Realizado)</p>
+                                <p className="text-gray-900 font-bold">Realizado: {formatCurrency(progressStats.totalPaid)}</p>
+                                <p className="text-gray-900 font-bold">Recebido: {formatCurrency(progressStats.totalReceived)}</p>
+                                <p className="text-gray-900 font-bold">Saldo: {formatCurrency(progressStats.balancePaid)}</p>
+                            </div>
+                            <div className="bg-gray-50 p-2 rounded-lg">
+                                <p className="text-gray-500 font-bold uppercase">Após Hoje (Pendente)</p>
+                                <p className="text-gray-900 font-bold">Saldo Atual: {formatCurrency(progressStats.currentBalance)}</p>
+                                <p className="text-gray-900 font-bold">A Receber: {formatCurrency(progressStats.totalToReceive)}</p>
+                                <p className="text-gray-900 font-bold">A Pagar: {formatCurrency(progressStats.totalToPay)}</p>
+                                <p className="text-gray-900 font-bold">Resultado: {formatCurrency(progressStats.projectedResult)}</p>
+                            </div>
                         </div>
-                        <div className="bg-gray-50 p-2 rounded-lg">
-                            <p className="text-gray-500 font-bold uppercase">Após Hoje (Pendente)</p>
-                            <p className="text-gray-900 font-bold">Saldo Atual: {formatCurrency(progressStats.currentBalance)}</p>
-                            <p className="text-gray-900 font-bold">A Receber: {formatCurrency(progressStats.totalToReceive)}</p>
-                            <p className="text-gray-900 font-bold">A Pagar: {formatCurrency(progressStats.totalToPay)}</p>
-                            <p className="text-gray-900 font-bold">Resultado: {formatCurrency(progressStats.projectedResult)}</p>
-                        </div>
+                        <button 
+                            onClick={handleCloseMonth}
+                            disabled={!canCloseMonth}
+                            className={`w-full mt-2 px-4 py-2 rounded-xl font-bold text-sm transition-colors ${canCloseMonth ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+                        >
+                            Fechar Mês
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mt-4">
+                <button 
+                    onClick={() => setShowWeeklyAlerts(!showWeeklyAlerts)} 
+                    className="w-full flex justify-between items-center text-sm font-bold text-gray-700"
+                >
+                    <span>Lançamentos da Semana</span>
+                    {showWeeklyAlerts ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+                {showWeeklyAlerts && (
+                    <div className="mt-2 space-y-2">
+                        {weeklyTransactions.length === 0 ? <p className="text-xs text-gray-500">Nenhum lançamento esta semana.</p> : weeklyTransactions.map(t => (
+                            <div key={t.id} className="flex justify-between text-xs p-2 bg-orange-50 rounded-lg text-orange-800">
+                                <span>{t.description}</span>
+                                <span>{formatCurrency(t.amount)}</span>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>

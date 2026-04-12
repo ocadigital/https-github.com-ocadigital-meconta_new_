@@ -39,7 +39,7 @@ export const FamilyFeed: React.FC = () => {
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const data = await res.json();
             setAllFeed(data);
-            setDisplayedFeed(data.slice(0, 10));
+            setDisplayedFeed(data.slice(0, 5));
         } catch (e) {
             console.error("Failed to load feed");
         } finally {
@@ -52,7 +52,7 @@ export const FamilyFeed: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        setDisplayedFeed(allFeed.slice(0, page * 10));
+        setDisplayedFeed(allFeed.slice(0, page * 5));
     }, [page, allFeed]);
 
     const toggleReaction = async (transactionId: string, type: 'LIKE' | 'CLAP') => {
