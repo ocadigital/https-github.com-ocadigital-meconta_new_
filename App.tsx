@@ -678,8 +678,21 @@ export default function App() {
       filteredTransactions.filter(t => t.type === TransactionType.EXPENSE).forEach(t => { const member = users.find(u => u.id === t.memberId)?.name || 'Desconhecido'; byPerson[member] = (byPerson[member] || 0) + t.amount; });
       const maxPersonSpent = Math.max(...(Object.values(byPerson) as number[]), 1);
 
-      return { comparisonData, donutData, evolutionData, byPerson, maxPersonSpent };
-  }, [stats, filteredTransactions, currentDate, transactions, users]);
+      const plannedVsActualData = expenseCategories.map(cat => {
+          const catTrans = filteredTransactions.filter(t => t.category === cat && t.type === TransactionType.EXPENSE);
+          const actual = catTrans.reduce((sum, t) => sum + t.amount, 0);
+          const planned = catTrans.reduce((sum, t) => sum + (t.amountPlanned || 0), 0);
+          return { name: cat, Realizado: actual, Planejado: planned };
+      });
+
+      const creditCardData = accounts.flatMap(a => a.cards).map(card => {
+          const cardTrans = filteredTransactions.filter(t => t.cardId === card.id);
+          const spent = cardTrans.reduce((sum, t) => sum + t.amount, 0);
+          return { name: card.name, spent, limit: card.limit || 0 };
+      });
+
+      return { comparisonData, donutData, evolutionData, byPerson, maxPersonSpent, plannedVsActualData, creditCardData };
+  }, [stats, filteredTransactions, currentDate, transactions, users, expenseCategories, accounts]);
 
   const getAccountColorClass = (name: string, type: string) => {
       const lower = name.toLowerCase();
@@ -737,7 +750,16 @@ export default function App() {
            </div>
        </header>
 
-       {/* ... Mobile Menu (omitted) ... */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white border-b border-gray-100 p-4 space-y-2">
+            <button onClick={() => { setView('dashboard'); setIsMobileMenuOpen(false); }} className="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50">Visão Geral</button>
+            <button onClick={() => { setView('feed'); setIsMobileMenuOpen(false); }} className="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50">Feed da Família</button>
+            <button onClick={() => { setView('transactions'); setIsMobileMenuOpen(false); }} className="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50">Lançamentos</button>
+            <button onClick={() => { setView('wallet'); setIsMobileMenuOpen(false); }} className="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50">Carteira</button>
+            <button onClick={() => { setView('categories'); setIsMobileMenuOpen(false); }} className="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50">Categorias</button>
+            <button onClick={() => { setView('chat'); setIsMobileMenuOpen(false); }} className="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50">Assistente IA</button>
+          </div>
+        )}
        {/* ... Sidebar and Main Content ... */}
        <div className="max-w-7xl mx-auto p-4 flex gap-6">
            <aside className={`hidden md:block bg-white rounded-none border-r border-gray-100 h-[calc(100vh-64px)] fixed left-0 top-16 overflow-y-auto z-20 transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>

@@ -155,6 +155,37 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
             </div>
 
+            {/* NEW CHARTS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-80">
+                    <h3 className="font-bold text-gray-800 text-sm mb-4">Despesas: Planejado vs Realizado</h3>
+                    <ResponsiveContainer width="100%" height="85%">
+                        <BarChart data={dashboardCharts.plannedVsActualData} layout="vertical" margin={{ left: 10, right: 10, top: 10, bottom: 10 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9"/>
+                            <XAxis type="number" hide/>
+                            <YAxis type="category" dataKey="name" tick={{fontSize: 10, fill: '#64748b'}} width={100} axisLine={false} tickLine={false}/>
+                            <RechartsTooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} formatter={(value: any) => formatCurrency(Number(value) || 0)}/>
+                            <Legend />
+                            <Bar dataKey="Planejado" fill="#cbd5e1" radius={[0, 4, 4, 0]} barSize={15}/>
+                            <Bar dataKey="Realizado" fill="#f43f5e" radius={[0, 4, 4, 0]} barSize={15}/>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-80">
+                    <h3 className="font-bold text-gray-800 text-sm mb-4">Gastos com Cartões de Crédito</h3>
+                    <ResponsiveContainer width="100%" height="85%">
+                        <BarChart data={dashboardCharts.creditCardData} layout="vertical" margin={{ left: 10, right: 10, top: 10, bottom: 10 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9"/>
+                            <XAxis type="number" hide/>
+                            <YAxis type="category" dataKey="name" tick={{fontSize: 10, fill: '#64748b'}} width={100} axisLine={false} tickLine={false}/>
+                            <RechartsTooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} formatter={(value: any) => formatCurrency(Number(value) || 0)}/>
+                            <Bar dataKey="spent" fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={20}/>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
             {/* TOP 7 CHART */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-80">
                 <div className="flex justify-between mb-4">
