@@ -682,6 +682,14 @@ export default function App() {
       return { income, expense, balance: income - expense, received, paid, toReceive: income - received, toPay: expense - paid };
   }, [monthlyTransactions]);
 
+  const filteredStats = useMemo(() => {
+      const income = filteredTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0);
+      const expense = filteredTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
+      const received = filteredTransactions.filter(t => t.type === TransactionType.INCOME && t.isPaid).reduce((acc, t) => acc + t.amount, 0);
+      const paid = filteredTransactions.filter(t => t.type === TransactionType.EXPENSE && t.isPaid).reduce((acc, t) => acc + t.amount, 0);
+      return { income, expense, balance: income - expense, received, paid, toReceive: income - received, toPay: expense - paid };
+  }, [filteredTransactions]);
+
   const dashboardCharts = useMemo(() => {
       const currentMonth = currentDate.getMonth();
       const currentYear = currentDate.getFullYear();
@@ -689,7 +697,7 @@ export default function App() {
       const prevMonthTrans = transactions.filter(t => { const d = parseDate(t.date); return d.getMonth() === prevDate.getMonth() && d.getFullYear() === prevDate.getFullYear(); });
       const prevIncome = prevMonthTrans.filter(t => t.type === TransactionType.INCOME).reduce((sum, t) => sum + t.amount, 0);
       const prevExpense = prevMonthTrans.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
-      const comparisonData = [{ name: 'Mês Anterior', Entradas: prevIncome, Saídas: prevExpense }, { name: 'Mês Atual', Entradas: stats.income, Saídas: stats.expense }];
+      const comparisonData = [{ name: 'Mês Anterior', Entradas: prevIncome, Saídas: prevExpense }, { name: 'Mês Atual', Entradas: monthlyStats.income, Saídas: monthlyStats.expense }];
       
       const categoryData: Record<string, number> = {};
       filteredTransactions.filter(t => t.type === TransactionType.EXPENSE).forEach(t => categoryData[t.category] = (categoryData[t.category] || 0) + t.amount);
@@ -721,7 +729,7 @@ export default function App() {
       });
 
       return { comparisonData, donutData, evolutionData, byPerson, maxPersonSpent, plannedVsActualData, creditCardData };
-  }, [stats, filteredTransactions, currentDate, transactions, users, expenseCategories, accounts]);
+  }, [monthlyStats, filteredTransactions, currentDate, transactions, users, expenseCategories, accounts]);
 
   const getAccountColorClass = (name: string, type: string) => {
       const lower = name.toLowerCase();
@@ -873,7 +881,7 @@ export default function App() {
                        transactions={transactions}
                        isPrevMonthClosed={isPrevMonthClosed}
                        filteredTransactions={filteredTransactions}
-                       stats={stats}
+                       stats={monthlyStats}
                        filters={filters}
                        setFilters={setFilters}
                        incomeCategories={incomeCategories}
@@ -889,11 +897,12 @@ export default function App() {
                        DateNavigatorComponent={renderDateNavigator}
                        onDeleteTransactions={handleBulkDelete}
                        onDuplicateTransaction={handleDuplicateTransaction}
+                       currentDate={currentDate}
                    />
                )}
                {view === 'dashboard' && (
                    <DashboardView 
-                       stats={stats}
+                       stats={filteredStats}
                        dashboardCharts={dashboardCharts}
                        filteredTransactions={filteredTransactions}
                        users={users}
