@@ -27,7 +27,7 @@ type SortKey = 'date' | 'description' | 'category' | 'amount' | 'isPaid';
 export const TransactionsView: React.FC<TransactionsViewProps> = ({
     filteredTransactions, stats, filters, setFilters, incomeCategories, expenseCategories,
     formatCurrency, formatDate, users, handleTogglePaid, handleEditTransaction,
-    setShowImportModal, setShowAddModal, DateNavigatorComponent, onDeleteTransactions, onDuplicateTransaction
+    setShowImportModal, setShowAddModal, DateNavigatorComponent, onDeleteTransactions, onDuplicateTransaction, handleCloseMonth
 }) => {
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' });
     const [selectedIds, setSelectedIds] = useState<string[]>([]);

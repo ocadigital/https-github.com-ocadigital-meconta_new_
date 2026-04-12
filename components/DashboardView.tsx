@@ -13,7 +13,6 @@ interface DashboardViewProps {
     users: User[];
     dashboardScope: 'family' | 'personal';
     setDashboardScope: (scope: 'family' | 'personal') => void;
-    handleCloseMonth: () => void;
     handlePrintReport: () => void;
     activeNotifications: any[];
     showNotifications: boolean;
@@ -27,7 +26,9 @@ interface DashboardViewProps {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
     stats, dashboardCharts, dashboardScope, setDashboardScope,
-    DateNavigatorComponent, formatCurrency, filteredTransactions
+    DateNavigatorComponent, formatCurrency, filteredTransactions,
+    handlePrintReport, activeNotifications, showNotifications,
+    setShowNotifications, currentDate, setShowAddModal, formatDate, users
 }) => {
     
     // Top 7 Expenses for Chart

@@ -20,6 +20,7 @@ import { DebugSuite } from './components/DebugSuite';
 import { DateNavigator } from './components/DateNavigator';
 import { DashboardView } from './components/DashboardView';
 import { TransactionsView } from './components/TransactionsView';
+import { useMonthClosure } from './hooks/useMonthClosure';
 
 // --- Helper Functions ---
 const formatCurrency = (value: number) => {
@@ -89,8 +90,7 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [showClosureWizard, setShowClosureWizard] = useState(false);
-  const [closureTargetDate, setClosureTargetDate] = useState<{month: number, year: number} | null>(null);
+  const { showClosureWizard, closureTargetDate, handleCloseMonth, closeWizard } = useMonthClosure(currentDate);
   const [dashboardScope, setDashboardScope] = useState<'family' | 'personal'>('family');
   
   // Profile Modals
@@ -502,10 +502,6 @@ export default function App() {
      showToast("Dados extraídos!");
   };
 
-  const handleCloseMonth = () => {
-      setClosureTargetDate({ month: currentDate.getMonth() + 1, year: currentDate.getFullYear() });
-      setShowClosureWizard(true);
-  };
 
   const handlePrintReport = () => {
       generateMonthlyReport(filteredTransactions, currentDate, currentUser);
@@ -848,6 +844,7 @@ export default function App() {
                        users={users}
                        handleTogglePaid={handleTogglePaid}
                        handleEditTransaction={handleEditTransaction}
+                       handleCloseMonth={handleCloseMonth}
                        setShowImportModal={setShowImportModal}
                        setShowAddModal={setShowAddModal}
                        DateNavigatorComponent={renderDateNavigator}
@@ -1146,7 +1143,7 @@ export default function App() {
            </div>
        )}
 
-       {showClosureWizard && <MonthlyClosureWizard month={closureTargetDate ? closureTargetDate.month : (currentDate.getMonth() + 1)} year={closureTargetDate ? closureTargetDate.year : currentDate.getFullYear()} onClose={() => setShowClosureWizard(false)} onFinished={() => setShowClosureWizard(false)} />}
+       {showClosureWizard && <MonthlyClosureWizard month={closureTargetDate ? closureTargetDate.month : (currentDate.getMonth() + 1)} year={closureTargetDate ? closureTargetDate.year : currentDate.getFullYear()} onClose={closeWizard} onFinished={closeWizard} />}
        {showImportModal && <ImportWizard accounts={accounts} existingTransactions={transactions} categories={[...incomeCategories, ...expenseCategories]} onClose={() => setShowImportModal(false)} onImportFinished={() => { setShowImportModal(false); loadData(); }} />}
        
        {showTerms && (
