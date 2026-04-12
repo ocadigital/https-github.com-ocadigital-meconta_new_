@@ -215,7 +215,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                     <div className="absolute top-0 left-0 h-full bg-blue-500" style={{ width: `${progressStats.progress}%` }}></div>
                     {/* Today's Marker */}
                     <div className="absolute top-[-30px] text-[10px] font-bold text-blue-600 z-20" style={{ left: `${progressStats.progress}%`, transform: 'translateX(-50%)' }}>
-                        {progressStats.dayToDisplay}
+                        {new Date().getDate()}
                     </div>
                     <div className="absolute top-0 left-0 h-full w-0.5 bg-white z-10" style={{ left: `${progressStats.progress}%` }}></div>
                 </div>

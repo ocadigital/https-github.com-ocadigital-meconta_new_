@@ -14,7 +14,7 @@ async function startServer() {
 
   // API routes FIRST
   app.use(express.json()); 
-  app.all("/api/*", async (req: Request, res: Response) => {
+  app.all("/api/(.*)", async (req: Request, res: Response) => {
     await apiHandler(req, res);
   });
 
