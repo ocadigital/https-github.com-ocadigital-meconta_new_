@@ -22,6 +22,7 @@ interface TransactionsViewProps {
     onDuplicateTransaction: (t: Transaction) => void;
     handleCloseMonth: () => void;
     isPrevMonthClosed: boolean;
+    currentDate: Date;
 }
 
 type SortKey = 'date' | 'description' | 'category' | 'amount' | 'isPaid';
@@ -29,7 +30,7 @@ type SortKey = 'date' | 'description' | 'category' | 'amount' | 'isPaid';
 export const TransactionsView: React.FC<TransactionsViewProps> = ({
     filteredTransactions, transactions, stats, filters, setFilters, incomeCategories, expenseCategories,
     formatCurrency, formatDate, users, handleTogglePaid, handleEditTransaction,
-    setShowImportModal, setShowAddModal, DateNavigatorComponent, onDeleteTransactions, onDuplicateTransaction, handleCloseMonth, isPrevMonthClosed
+    setShowImportModal, setShowAddModal, DateNavigatorComponent, onDeleteTransactions, onDuplicateTransaction, handleCloseMonth, isPrevMonthClosed, currentDate
 }) => {
     const [sortConfig, setSortConfig] = useState<{ key: SortKey, direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' });
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -54,17 +55,24 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
     }, [isPrevMonthClosed]);
 
     const progressStats = useMemo(() => {
-        const today = new Date().getDate();
-        const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+        const today = new Date();
+        const isCurrentMonth = today.getMonth() === currentDate.getMonth() && today.getFullYear() === currentDate.getFullYear();
+        const isPastMonth = currentDate < new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        const dayToDisplay = isPastMonth 
+            ? new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
+            : (isCurrentMonth ? today.getDate() : 1);
+            
+        const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
         
         // Before today: Paid transactions
-        const paidTransactions = filteredTransactions.filter(t => t.isPaid && new Date(t.date).getDate() < today);
+        const paidTransactions = filteredTransactions.filter(t => t.isPaid && new Date(t.date).getDate() < dayToDisplay);
         const totalPaid = paidTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
         const totalReceived = paidTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0);
         const balancePaid = totalReceived - totalPaid;
         
         // After today: Pending transactions
-        const pendingTransactions = filteredTransactions.filter(t => !t.isPaid && new Date(t.date).getDate() >= today);
+        const pendingTransactions = filteredTransactions.filter(t => !t.isPaid && new Date(t.date).getDate() >= dayToDisplay);
         const totalToPay = pendingTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
         const totalToReceive = pendingTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0);
         
@@ -76,7 +84,8 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         const projectedResult = currentBalance + totalToReceive - totalToPay;
         
         return {
-            progress: (today / daysInMonth) * 100,
+            progress: (dayToDisplay / daysInMonth) * 100,
+            dayToDisplay,
             totalPaid,
             totalReceived,
             balancePaid,
@@ -85,7 +94,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
             totalToReceive,
             projectedResult
         };
-    }, [filteredTransactions]);
+    }, [filteredTransactions, currentDate]);
 
     const handleSort = (key: SortKey) => {
         setSortConfig(current => ({
@@ -226,10 +235,10 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                 <div className="relative h-4 bg-gray-200 rounded-full overflow-hidden">
                     <div className="absolute top-0 left-0 h-full bg-blue-500" style={{ width: `${progressStats.progress}%` }}></div>
                     {/* Today's Marker */}
-                    <div className="absolute top-[-30px] text-[10px] font-bold text-blue-600" style={{ left: `${progressStats.progress}%`, transform: 'translateX(-50%)' }}>
-                        {new Date().getDate()}
+                    <div className="absolute top-[-30px] text-[10px] font-bold text-blue-600 z-20" style={{ left: `${progressStats.progress}%`, transform: 'translateX(-50%)' }}>
+                        {progressStats.dayToDisplay}
                     </div>
-                    <div className="absolute top-0 left-0 h-full w-0.5 bg-white" style={{ left: `${progressStats.progress}%` }}></div>
+                    <div className="absolute top-0 left-0 h-full w-0.5 bg-white z-10" style={{ left: `${progressStats.progress}%` }}></div>
                 </div>
                 
                 <button 

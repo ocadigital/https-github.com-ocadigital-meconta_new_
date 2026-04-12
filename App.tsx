@@ -667,13 +667,20 @@ export default function App() {
       });
   }, [transactions, ignoredNotifications]);
 
-  const stats = useMemo(() => {
-      const income = filteredTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0);
-      const expense = filteredTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
-      const received = filteredTransactions.filter(t => t.type === TransactionType.INCOME && t.isPaid).reduce((acc, t) => acc + t.amount, 0);
-      const paid = filteredTransactions.filter(t => t.type === TransactionType.EXPENSE && t.isPaid).reduce((acc, t) => acc + t.amount, 0);
+  const monthlyTransactions = useMemo(() => {
+      return transactions.filter(t => {
+          const d = parseDate(t.date);
+          return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
+      });
+  }, [transactions, currentDate]);
+
+  const monthlyStats = useMemo(() => {
+      const income = monthlyTransactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, t) => acc + t.amount, 0);
+      const expense = monthlyTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, t) => acc + t.amount, 0);
+      const received = monthlyTransactions.filter(t => t.type === TransactionType.INCOME && t.isPaid).reduce((acc, t) => acc + t.amount, 0);
+      const paid = monthlyTransactions.filter(t => t.type === TransactionType.EXPENSE && t.isPaid).reduce((acc, t) => acc + t.amount, 0);
       return { income, expense, balance: income - expense, received, paid, toReceive: income - received, toPay: expense - paid };
-  }, [filteredTransactions]);
+  }, [monthlyTransactions]);
 
   const dashboardCharts = useMemo(() => {
       const currentMonth = currentDate.getMonth();
